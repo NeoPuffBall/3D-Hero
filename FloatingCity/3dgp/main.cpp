@@ -24,6 +24,8 @@ float accel = 4.f;		// camera acceleration
 vec3 _acc(0), _vel(0);	// camera acceleration and velocity vectors
 float _fov = 60.f;		// field of view (zoom)
 
+C3dglModel city;
+
 bool init()
 {
 	// rendering states
@@ -32,10 +34,9 @@ bool init()
 	glShadeModel(GL_SMOOTH);	// smooth shading mode is the default one; try GL_FLAT here!
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	// this is the default one; try GL_LINE!
 
-	// setup lighting
-	glEnable(GL_LIGHTING);									// --- DEPRECATED
-	glEnable(GL_LIGHT0);									// --- DEPRECATED
-
+	///////////////////
+	// Models
+	if (!city.load("models\\city/kerwan.obj")) return false;
 
 	// Initialise the View Matrix (initial position of the camera)
 	matrixView = rotate(mat4(1), radians(12.f), vec3(1, 0, 0));
@@ -61,17 +62,11 @@ bool init()
 void renderScene(mat4& matrixView, float time, float deltaTime)
 {
 	mat4 m;
+	m = matrixView;
 
-	// setup materials - green (grass)
-	GLfloat rgbaGreen[] = { 0.2f, 0.8f, 0.2f };				// --- DEPRECATED
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, rgbaGreen);	// --- DEPRECATED
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, rgbaGreen);	// --- DEPRECATED
+	city.render(m);
 
 
-	// setup materials - grey (road)
-	GLfloat rgbaGrey[] = { 0.3f, 0.3f, 0.16f };				// --- DEPRECATED
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, rgbaGrey);	// --- DEPRECATED
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, rgbaGrey);	// --- DEPRECATED
 
 }
 
