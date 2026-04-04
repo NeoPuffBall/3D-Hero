@@ -15,6 +15,9 @@ using namespace _3dgl;
 using namespace glm;
 
 
+// GLSL Program
+C3dglProgram program;
+
 // The View Matrix
 mat4 matrixView;
 
@@ -33,6 +36,22 @@ bool init()
 	glEnable(GL_NORMALIZE);		// normalization is needed by AssImp library models
 	glShadeModel(GL_SMOOTH);	// smooth shading mode is the default one; try GL_FLAT here!
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	// this is the default one; try GL_LINE!
+
+	// Initialise Shaders
+	C3dglShader vertexShader;
+	C3dglShader fragmentShader;
+
+	if (!vertexShader.create(GL_VERTEX_SHADER)) return false;
+	if (!vertexShader.loadFromFile("shaders/basic.vert")) return false;
+	if (!vertexShader.compile()) return false;
+	if (!fragmentShader.create(GL_FRAGMENT_SHADER)) return false;
+	if (!fragmentShader.loadFromFile("shaders/basic.frag")) return false;
+	if (!fragmentShader.compile()) return false;
+	if (!program.create()) return false;
+	if (!program.attach(vertexShader)) return false;
+	if (!program.attach(fragmentShader)) return false;
+	if (!program.link()) return false;
+	if (!program.use(true)) return false;
 
 	///////////////////
 	// Models
@@ -64,6 +83,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	mat4 m;
 	m = matrixView;
 
+	program.sendUniform("material", vec3(0.6f, 0.6f, 0.6f));
 	city.render(m);
 
 
@@ -108,9 +128,7 @@ void onReshape(int w, int h)
 	mat4 matrixProjection = perspective(radians(_fov), ratio, 0.02f, 1000.f);
 
 	// Setup the Projection Matrix
-	glMatrixMode(GL_PROJECTION);							// --- DEPRECATED
-	glLoadIdentity();										// --- DEPRECATED
-	glMultMatrixf((GLfloat*)&matrixProjection);				// --- DEPRECATED
+	program.sendUniform("matrixProjection", matrixProjection);
 }
 
 // Handle WASDQE keys
