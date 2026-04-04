@@ -53,6 +53,9 @@ bool init()
 	if (!program.link()) return false;
 	if (!program.use(true)) return false;
 
+	program.sendUniform("lightDir.direction", vec3(1.0, 0.5, 0.0));
+	program.sendUniform("lightDir.diffuse", vec3(0.3, 0.3, 0.3));
+
 	///////////////////
 	// Models
 	if (!city.load("models\\city/kerwan.obj")) return false;
@@ -83,9 +86,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	mat4 m;
 	m = matrixView;
 
-	program.sendUniform("material", vec3(0.6f, 0.6f, 0.6f));
+	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
 	city.render(m);
-
 
 
 }
@@ -109,6 +111,9 @@ void onRender()
 		_vel * deltaTime),		// animate camera motion (controlled by WASD keys)
 		-pitch, vec3(1, 0, 0))	// switch the pitch on
 		* matrixView;
+
+	// setup View Matrix
+	program.sendUniform("matrixView", matrixView);
 
 	// render the scene objects
 	renderScene(matrixView, time, deltaTime);
