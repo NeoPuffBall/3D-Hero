@@ -18,6 +18,13 @@ using namespace glm;
 // GLSL Program
 C3dglProgram program;
 
+GLuint idTexMouse;
+
+C3dglSkyBox Skybox;
+
+C3dglModel Mouse;
+C3dglModel clapping;
+
 // The View Matrix
 mat4 matrixView;
 
@@ -53,12 +60,27 @@ bool init()
 	if (!program.link()) return false;
 	if (!program.use(true)) return false;
 
+	program.sendUniform("lightAmbient.color", vec3(0.05, 0.05, 0.05));
+	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
+
+	//Setup Directional Light
 	program.sendUniform("lightDir.direction", vec3(1.0, 0.5, 0.0));
 	program.sendUniform("lightDir.diffuse", vec3(0.3, 0.3, 0.3));
 
 	///////////////////
 	// Models
 	if (!city.load("models\\city/kerwan.obj")) return false;
+
+	if (!Mouse.load("models\\Mouse.fbx")) return false;
+	Mouse.loadMaterials("models\\");
+
+	if (!clapping.load("models\\Clapping.fbx")) return false;
+
+	//Load Skybox
+	if (!Skybox.load("models\\SkyFront.png", "models\\SkyRight.png", "models\\SkyBack.png",
+		"models\\SkyLeft.png", "models\\SkyTop.png", "models\\SkyBottom.png")) return false;
+
+	//program.sendUniform("texture0", 0);
 
 	// Initialise the View Matrix (initial position of the camera)
 	matrixView = rotate(mat4(1), radians(12.f), vec3(1, 0, 0));
@@ -86,9 +108,30 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	mat4 m;
 	m = matrixView;
 
+	program.sendUniform("lightAmbient.color", vec3(1.0f, 1.0f, 1.0f));
+	program.sendUniform("materialAmbient", vec3(1.0f, 1.0f, 1.0f));
+	program.sendUniform("materialDiffuse", vec3(0.0f, 0.0f, 0.0f));
+
+	//Render the skybox
+	Skybox.render(m);
+
+	program.sendUniform("lightAmbient.color", vec3(0.0, 0.0, 0.0));
+
 	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
 	city.render(m);
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idTexMouse);
+
+	std::vector<mat4> transforms;
+	Mouse.getAnimData(0, time, transforms);
+	program.sendUniform("bones", &transforms[0], transforms.size());
+
+	m = matrixView;
+	m = translate(m, vec3(0.0f, 0.0f, 30.0f));
+	m = scale(m, vec3(0.01f, 0.01f, 0.01f));
+	Mouse.render(m);
+	Mouse.loadAnimations(&clapping);
 
 }
 
