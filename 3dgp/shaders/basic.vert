@@ -76,4 +76,6 @@ normal = normalize(mat3(matrixModelView) * mat3(matrixBone) * aNormal);
 color = vec4(0, 0, 0, 1);
 color += AmbientLight(lightAmbient);
 color += DirectionalLight(lightDir);
+
+texCoord0 = aTexCoord;
 }

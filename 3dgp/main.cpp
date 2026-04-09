@@ -60,6 +60,10 @@ bool init()
 	if (!program.link()) return false;
 	if (!program.use(true)) return false;
 
+	// glut additional setup
+	glutSetVertexAttribCoord3(program.getAttribLocation("aVertex"));
+	glutSetVertexAttribNormal(program.getAttribLocation("aNormal"));
+
 	program.sendUniform("lightAmbient.color", vec3(0.05, 0.05, 0.05));
 	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
 
@@ -68,19 +72,23 @@ bool init()
 	program.sendUniform("lightDir.diffuse", vec3(0.3, 0.3, 0.3));
 
 	///////////////////
-	// Models
-	if (!city.load("models\\city/kerwan.obj")) return false;
+	
+	//Load Skybox
+	if (!Skybox.load("models\\SkyFront.png", "models\\SkyRight.png", "models\\SkyBack.png",
+		"models\\SkyLeft.png", "models\\SkyTop.png", "models\\SkyBottom.png")) return false;
 
+	//Load Mouse
 	if (!Mouse.load("models\\Mouse.fbx")) return false;
 	Mouse.loadMaterials("models\\");
 
 	if (!clapping.load("models\\Clapping.fbx")) return false;
 
-	//Load Skybox
-	if (!Skybox.load("models\\SkyFront.png", "models\\SkyRight.png", "models\\SkyBack.png",
-		"models\\SkyLeft.png", "models\\SkyTop.png", "models\\SkyBottom.png")) return false;
+	// Models
+	if (!city.load("models\\city/kerwan.obj")) return false;
 
-	//program.sendUniform("texture0", 0);
+	C3dglBitmap test;
+
+	// load textures
 
 	// Initialise the View Matrix (initial position of the camera)
 	matrixView = rotate(mat4(1), radians(12.f), vec3(1, 0, 0));
@@ -120,8 +128,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
 	city.render(m);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, idTexMouse);
+	/*glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idTexMouse);*/
 
 	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
