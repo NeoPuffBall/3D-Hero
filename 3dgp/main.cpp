@@ -68,14 +68,14 @@ bool init()
 	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
 
 	//Setup Directional Light
-	program.sendUniform("lightDir.direction", vec3(1.0, 0.5, 0.0));
-	program.sendUniform("lightDir.diffuse", vec3(0.3, 0.3, 0.3));
+	program.sendUniform("lightDir.direction", vec3(-1.0, 0.5, 0.2));
+	program.sendUniform("lightDir.diffuse", vec3(0.4, 0.4, 0.4));
 
 	///////////////////
 	
 	//Load Skybox
-	if (!Skybox.load("models\\SkyFront.png", "models\\SkyRight.png", "models\\SkyBack.png",
-		"models\\SkyLeft.png", "models\\SkyTop.png", "models\\SkyBottom.png")) return false;
+	if (!Skybox.load("models\\Sky_posz.png", "models\\Sky_posx.png", "models\\Sky_negz.png",
+		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
 
 	//Load Mouse
 	if (!Mouse.load("models\\Mouse.fbx")) return false;
@@ -85,8 +85,8 @@ bool init()
 
 	// Models
 	if (!city.load("models\\city/kerwan.obj")) return false;
+	city.loadMaterials("models\\");
 
-	C3dglBitmap test;
 
 	// load textures
 
@@ -128,16 +128,13 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
 	city.render(m);
 
-	/*glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, idTexMouse);*/
-
 	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
 	program.sendUniform("bones", &transforms[0], transforms.size());
 
 	m = matrixView;
-	m = translate(m, vec3(0.0f, 0.0f, 30.0f));
-	m = scale(m, vec3(0.01f, 0.01f, 0.01f));
+	m = translate(m, vec3(20.885f, 4.315f, -7.75f));
+	m = scale(m, vec3(0.001f, 0.001f, 0.001f));
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
