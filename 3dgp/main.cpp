@@ -1,8 +1,11 @@
+#define _USE_MATH_DEFINES //Enable the use of M_PI
+
 #include <iostream>
 #include <GL/glew.h>
 #include <3dgl/3dgl.h>
 #include <GL/glut.h>
 #include <GL/freeglut_ext.h>
+#include <math.h>
 
 // Include GLM core features
 #include "glm/glm.hpp"
@@ -16,9 +19,12 @@ using namespace glm;
 
 
 // GLSL Program
-C3dglProgram program;
+C3dglProgram program, programParticle;
 
-GLuint idTexMouse;
+// Texture ID's
+
+// Particle buffers
+GLuint idBufferVelocity, idBufferStartTime;
 
 C3dglSkyBox Skybox;
 
@@ -36,6 +42,11 @@ float _fov = 60.f;		// field of view (zoom)
 
 C3dglModel city;
 
+// Particle System Params
+const float PERIOD = 0.00075f;
+const float LIFETIME = 6;
+const int NPARTICLES = (int)(LIFETIME / PERIOD);
+
 bool init()
 {
 	// rendering states
@@ -47,6 +58,8 @@ bool init()
 	// Initialise Shaders
 	C3dglShader vertexShader;
 	C3dglShader fragmentShader;
+	C3dglShader vertexParticles;
+	C3dglShader fragmentParticles;
 
 	if (!vertexShader.create(GL_VERTEX_SHADER)) return false;
 	if (!vertexShader.loadFromFile("shaders/basic.vert")) return false;
@@ -59,6 +72,18 @@ bool init()
 	if (!program.attach(fragmentShader)) return false;
 	if (!program.link()) return false;
 	if (!program.use(true)) return false;
+
+	if (!vertexParticles.create(GL_VERTEX_SHADER)) return false;
+	if (!vertexParticles.loadFromFile("shaders/particles.vert")) return false;
+	if (!vertexParticles.compile()) return false;
+	if (!fragmentParticles.create(GL_FRAGMENT_SHADER)) return false;
+	if (!fragmentParticles.loadFromFile("shaders/particles.frag")) return false;
+	if (!fragmentParticles.compile()) return false;
+	if (!programParticle.create()) return false;
+	if (!programParticle.attach(vertexParticles)) return false;
+	if (!programParticle.attach(fragmentParticles)) return false;
+	if (!programParticle.link()) return false;
+	if (!programParticle.use(true)) return false;
 
 	// glut additional setup
 	glutSetVertexAttribCoord3(program.getAttribLocation("aVertex"));
@@ -89,6 +114,46 @@ bool init()
 
 
 	// load textures
+
+
+	// Setup the particle system
+	programParticle.sendUniform("initialPos", vec3(0.0, 0.58, 0.0));
+	programParticle.sendUniform("gravity", vec3(0.0, -0.2, 0.0));
+	programParticle.sendUniform("particleLifetime", LIFETIME);
+
+	// Prepare the particle buffers
+	std::vector<float> bufferVelocity;
+	std::vector<float> bufferStartTime;
+
+	float time = 0;
+
+	for (int i = 0; i < NPARTICLES; i++)
+
+	{
+
+		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
+		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
+		float x = sin(theta) * cos(phi);
+		float y = cos(theta);
+		float z = sin(theta) * sin(phi);
+		float v = 2 + 0.5f * (float)rand() / (float)RAND_MAX;
+
+		bufferVelocity.push_back(x * v);
+		bufferVelocity.push_back(y * v);
+		bufferVelocity.push_back(z * v);
+
+		bufferStartTime.push_back(time);
+		time += PERIOD;
+	}
+
+	glGenBuffers(1, &idBufferVelocity);
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferVelocity);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferVelocity.size(), &bufferVelocity[0],
+		GL_STATIC_DRAW);
+	glGenBuffers(1, &idBufferStartTime);
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferStartTime);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferStartTime.size(), &bufferStartTime[0],
+		GL_STATIC_DRAW);
 
 	// Initialise the View Matrix (initial position of the camera)
 	matrixView = rotate(mat4(1), radians(12.f), vec3(1, 0, 0));
@@ -138,6 +203,26 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
+	
+	//RENDER THE PARTICLE SYSTEM
+	programParticle.use();
+
+	m = matrixView;
+	programParticle.sendUniform("matrixModelView", m);
+
+	// render the buffer
+	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
+	GLint aStartTime = programParticle.getAttribLocation("aStartTime");
+	glEnableVertexAttribArray(aVelocity); // velocity
+	glEnableVertexAttribArray(aStartTime); // start time
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferVelocity);
+	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferStartTime);
+	glVertexAttribPointer(aStartTime, 1, GL_FLOAT, GL_FALSE, 0, 0);
+	glDrawArrays(GL_POINTS, 0, NPARTICLES);
+	glDisableVertexAttribArray(aVelocity);
+	glDisableVertexAttribArray(aStartTime);
+
 }
 
 void onRender()
@@ -163,6 +248,9 @@ void onRender()
 	// setup View Matrix
 	program.sendUniform("matrixView", matrixView);
 
+	// send time to particle shaders
+	programParticle.sendUniform("time", time);
+
 	// render the scene objects
 	renderScene(matrixView, time, deltaTime);
 
@@ -181,7 +269,9 @@ void onReshape(int w, int h)
 	mat4 matrixProjection = perspective(radians(_fov), ratio, 0.02f, 1000.f);
 
 	// Setup the Projection Matrix
-	program.sendUniform("matrixProjection", matrixProjection);
+	mat4 m = perspective(radians(60.f), ratio, 0.02f, 1000.f);
+	program.sendUniform("matrixProjection", m);
+	programParticle.sendUniform("matrixProjection", m);
 }
 
 // Handle WASDQE keys
