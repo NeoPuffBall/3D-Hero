@@ -103,14 +103,14 @@ bool init()
 		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
 
 	//Load Mouse
-	if (!Mouse.load("models\\Mouse.fbx")) return false;
-	Mouse.loadMaterials("models\\");
+	if (!Mouse.load("models/Mouse.fbx")) return false;
+	Mouse.loadMaterials("models/");
 
-	if (!clapping.load("models\\Clapping.fbx")) return false;
+	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	if (!city.load("models\\city/kerwan.obj")) return false;
-	city.loadMaterials("models\\");
+	if (!city.load("models/city/kerwan.obj")) return false;
+	city.loadMaterials("models/city");
 
 
 	// load textures
@@ -188,9 +188,10 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	//Render the skybox
 	Skybox.render(m);
 
-	program.sendUniform("lightAmbient.color", vec3(0.0, 0.0, 0.0));
+	program.sendUniform("lightAmbient.color", vec3(1, 1, 1));
 
 	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
+	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
 	city.render(m);
 
 	std::vector<mat4> transforms;
@@ -198,7 +199,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	program.sendUniform("bones", &transforms[0], transforms.size());
 
 	m = matrixView;
-	m = translate(m, vec3(20.885f, 4.315f, -7.75f));
+	m = translate(m, vec3(0, 0, 0));
 	m = scale(m, vec3(0.001f, 0.001f, 0.001f));
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
