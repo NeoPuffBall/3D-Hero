@@ -109,8 +109,8 @@ bool init()
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	if (!city.load("models/city/kerwan.obj")) return false;
-	city.loadMaterials("models/city");
+	if (!city.load("models/kerwan.glb")) return false;
+	city.loadMaterials("models/kerwan.glb");
 
 
 	// load textures
