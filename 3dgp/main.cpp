@@ -54,8 +54,6 @@ bool init()
 	glEnable(GL_NORMALIZE);		// normalization is needed by AssImp library models
 	glShadeModel(GL_SMOOTH);	// smooth shading mode is the default one; try GL_FLAT here!
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	// this is the default one; try GL_LINE!
-	glEnable(GL_POINT_SPRITE);
-	glPointSize(50);
 
 	// Initialise Shaders
 	C3dglShader vertexShader;
@@ -130,7 +128,7 @@ bool init()
 		GL_UNSIGNED_BYTE, fire.getBits());
 
 	// Setup the particle system
-	programParticle.sendUniform("initialPos", vec3(0, 0, 0));
+	programParticle.sendUniform("initialPos", vec3(-22.0f,-3.0f,-4.10f));
 	programParticle.sendUniform("gravity", vec3(0.0, 0.1, 0.0));
 	programParticle.sendUniform("particleLifetime", LIFETIME);
 	programParticle.sendUniform("texture0", 0);
@@ -146,15 +144,13 @@ bool init()
 
 	{
 
-		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
-		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
 		float x = 0;
-		float y = (rand() % 10) - 5.5;
+		float y = (rand() % 1);
 		float z = 0;
 		float v = 1;
-		float xp = (rand() % 100) - 60;
+		float xp = (-rand() % 3);
 		float xy = 0;
-		float xz = 0;
+		float xz = (-rand() % 3);
 
 		bufferVelocity.push_back(x * v);
 		bufferVelocity.push_back(y * v);
@@ -239,6 +235,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDepthMask(GL_FALSE); // disable depth buffer updates
 	glActiveTexture(GL_TEXTURE0); // choose the active texture
 	glBindTexture(GL_TEXTURE_2D, texFireID); // bind the texture
+
+	glEnable(GL_POINT_SPRITE);
+	glPointSize(50);
 
 	programParticle.use();
 
@@ -424,7 +423,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(1280, 720);
-	glutCreateWindow("3DGL Scene: First Terrain");
+	glutCreateWindow("3DGL Scene: Floating City");
 
 	// init glew
 	GLenum err = glewInit();
