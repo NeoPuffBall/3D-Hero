@@ -168,9 +168,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="particles.frag" />
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
+    <None Include="shaders\particles.frag" />
     <None Include="shaders\particles.vert" />
   </ItemGroup>
   <ItemGroup>
