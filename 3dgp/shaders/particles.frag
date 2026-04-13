@@ -6,6 +6,7 @@ out vec4 outColor;
 
 void main()
 {
+
     vec4 texColor = texture(texture0, gl_PointCoord);
     
     vec3 tint = vec3(0.8, 1.0, 0.2);

@@ -22,9 +22,9 @@ using namespace glm;
 C3dglProgram program, programParticle;
 
 // Texture ID's
-
+GLuint texFireID, texSmokeID;
 // Particle buffers
-GLuint idBufferVelocity, idBufferStartTime;
+GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos;
 
 C3dglSkyBox Skybox;
 
@@ -45,8 +45,8 @@ float _fov = 60.f;		// field of view (zoom)
 C3dglModel city;
 
 // Particle System Params
-const float PERIOD = 0.00075f;
-const float LIFETIME = 6;
+const float PERIOD = 0.001f;
+const float LIFETIME = 4;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
 bool init()
@@ -95,8 +95,8 @@ bool init()
 	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
 
 	//Setup Directional Light
-	program.sendUniform("lightDir.direction", vec3(-1.0, 0.5, 0.2));
-	program.sendUniform("lightDir.diffuse", vec3(0.4, 0.4, 0.4));
+	program.sendUniform("lightDir.direction", vec3(0.5, 0.5, 0.5));
+	program.sendUniform("lightDir.diffuse", vec3(0.6, 0.6, 0.6));
 
 	///////////////////
 	
@@ -117,7 +117,19 @@ bool init()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	// load textures
-	C3dglBitmap bm;
+
+	C3dglBitmap fire, smoke, bm;
+
+	fire.load("models/fire.png", GL_RGBA);
+	if (!fire.getBits()) return false;
+
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &texFireID);
+	glBindTexture(GL_TEXTURE_2D, texFireID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fire.getWidth(), fire.getHeight(), 0, GL_RGBA,
+		GL_UNSIGNED_BYTE, fire.getBits());
+
 	bm.load("models\\firefly.png", GL_RGBA);
 	if (!bm.getBits()) return false;
 	glActiveTexture(GL_TEXTURE1);
@@ -127,13 +139,15 @@ bool init()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bm.getWidth(), bm.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bm.getBits());
 
 	// Setup the particle system
-	programParticle.sendUniform("initialPos", vec3(0.0, 0.58, 0.0));
-	programParticle.sendUniform("gravity", vec3(0.0, -0.2, 0.0));
+	programParticle.sendUniform("initialPos", vec3(-22.0f,-3.0f,-4.10f));
+	programParticle.sendUniform("gravity", vec3(0.0, 0.1, 0.0));
 	programParticle.sendUniform("particleLifetime", LIFETIME);
+	programParticle.sendUniform("texture0", 0);
 
 	// Prepare the particle buffers
 	std::vector<float> bufferVelocity;
 	std::vector<float> bufferStartTime;
+	std::vector<float> bufferIndividualPos;
 
 	float time = 0;
 
@@ -141,18 +155,24 @@ bool init()
 
 	{
 
-		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
-		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
-		float x = sin(theta) * cos(phi);
-		float y = cos(theta);
-		float z = sin(theta) * sin(phi);
-		float v = 2 + 0.5f * (float)rand() / (float)RAND_MAX;
+		float x = 0;
+		float y = (rand() % 1);
+		float z = 0;
+		float v = 1;
+		float xp = (-rand() % 3);
+		float xy = 0;
+		float xz = (-rand() % 3);
 
 		bufferVelocity.push_back(x * v);
 		bufferVelocity.push_back(y * v);
 		bufferVelocity.push_back(z * v);
 
 		bufferStartTime.push_back(time);
+
+		bufferIndividualPos.push_back(xp);
+		bufferIndividualPos.push_back(xy);
+		bufferIndividualPos.push_back(xz);
+
 		time += PERIOD;
 	}
 
@@ -163,6 +183,10 @@ bool init()
 	glGenBuffers(1, &idBufferStartTime);
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferStartTime);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferStartTime.size(), &bufferStartTime[0],
+		GL_STATIC_DRAW);
+	glGenBuffers(1, &idBufferIndividualPos);
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferIndividualPos);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferIndividualPos.size(), &bufferIndividualPos[0],
 		GL_STATIC_DRAW);
 
 	// Initialise the View Matrix (initial position of the camera)
@@ -181,6 +205,7 @@ bool init()
 	cout << "  QE or PgUp/Dn to move the camera up and down" << endl;
 	cout << "  Shift to speed up your movement" << endl;
 	cout << "  Drag the mouse to look around" << endl;
+	cout << "  Test: " << (rand() % 10) - 5.5 << endl;
 	cout << endl;
 
 	return true;
@@ -208,14 +233,23 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	Mouse.getAnimData(0, time, transforms);
 	program.sendUniform("bones", &transforms[0], transforms.size());
 
+	// Mouse
 	m = matrixView;
-	m = translate(m, vec3(0, 0, 0));
+	m = translate(m, vec3(-19.34f, -3.083f, -1.5f));
 	m = scale(m, vec3(0.001f, 0.001f, 0.001f));
+	m = rotate(m, radians(40.0f), vec3(0, 1, 0));
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
 	
 	//RENDER THE PARTICLE SYSTEM
+	glDepthMask(GL_FALSE); // disable depth buffer updates
+	glActiveTexture(GL_TEXTURE0); // choose the active texture
+	glBindTexture(GL_TEXTURE_2D, texFireID); // bind the texture
+
+	glEnable(GL_POINT_SPRITE);
+	glPointSize(50);
+
 	programParticle.use();
 
 	m = matrixView;
@@ -232,15 +266,22 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	// render the buffer
 	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
 	GLint aStartTime = programParticle.getAttribLocation("aStartTime");
+	GLint aIndividualPos = programParticle.getAttribLocation("individualPos");
 	glEnableVertexAttribArray(aVelocity); // velocity
 	glEnableVertexAttribArray(aStartTime); // start time
+	glEnableVertexAttribArray(aIndividualPos);
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferVelocity);
 	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferStartTime);
 	glVertexAttribPointer(aStartTime, 1, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, idBufferIndividualPos);
+	glVertexAttribPointer(aIndividualPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
 	glDisableVertexAttribArray(aVelocity);
 	glDisableVertexAttribArray(aStartTime);
+	glDisableVertexAttribArray(aIndividualPos);
+
+	glDepthMask(GL_TRUE);
 
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
@@ -404,7 +445,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(1280, 720);
-	glutCreateWindow("3DGL Scene: First Terrain");
+	glutCreateWindow("3DGL Scene: Floating City");
 
 	// init glew
 	GLenum err = glewInit();
@@ -431,7 +472,7 @@ int main(int argc, char **argv)
 	C3dglLogger::log("Version: {}", (const char*)glGetString(GL_VERSION));
 	C3dglLogger::log("");
 
-	// init light and everything – not a GLUT or callback function!
+	// init light and everything Â– not a GLUT or callback function!
 	if (!init())
 	{
 		C3dglLogger::log("Application failed to initialise\r\n");
