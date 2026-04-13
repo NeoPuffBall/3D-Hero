@@ -28,6 +28,8 @@ GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos;
 
 C3dglSkyBox Skybox;
 
+GLuint idFireflyTex;
+
 C3dglModel Mouse;
 C3dglModel clapping;
 
@@ -112,10 +114,11 @@ bool init()
 	if (!city.load("models/kerwan.glb")) return false;
 	city.loadMaterials("models/kerwan.glb");
 
+	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	// load textures
 
-	C3dglBitmap fire, smoke;
+	C3dglBitmap fire, smoke, bm;
 
 	fire.load("models/fire.png", GL_RGBA);
 	if (!fire.getBits()) return false;
@@ -126,6 +129,14 @@ bool init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fire.getWidth(), fire.getHeight(), 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, fire.getBits());
+
+	bm.load("models\\firefly.png", GL_RGBA);
+	if (!bm.getBits()) return false;
+	glActiveTexture(GL_TEXTURE1);
+	glGenTextures(1, &idFireflyTex);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bm.getWidth(), bm.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bm.getBits());
 
 	// Setup the particle system
 	programParticle.sendUniform("initialPos", vec3(-22.0f,-3.0f,-4.10f));
@@ -244,6 +255,14 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = matrixView;
 	programParticle.sendUniform("matrixModelView", m);
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+	programParticle.sendUniform("texture0", 0);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDepthMask(GL_FALSE);
+
 	// render the buffer
 	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
 	GLint aStartTime = programParticle.getAttribLocation("aStartTime");
@@ -263,6 +282,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDisableVertexAttribArray(aIndividualPos);
 
 	glDepthMask(GL_TRUE);
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
 
 }
 
@@ -450,7 +472,7 @@ int main(int argc, char **argv)
 	C3dglLogger::log("Version: {}", (const char*)glGetString(GL_VERSION));
 	C3dglLogger::log("");
 
-	// init light and everything – not a GLUT or callback function!
+	// init light and everything Â– not a GLUT or callback function!
 	if (!init())
 	{
 		C3dglLogger::log("Application failed to initialise\r\n");

@@ -24,6 +24,7 @@ out vec2 texCoord0;
 
 void main()
 {
+gl_PointSize = 20.0;
 float t = mod(time - aStartTime, particleLifetime);
 vec3 pos = (initialPos - individualPos) + aVelocity * t + gravity * t * t;
 age = t / particleLifetime;
