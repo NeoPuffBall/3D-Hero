@@ -27,7 +27,7 @@
     <None Include="shaders\particles.vert">
       <Filter>Shader Source Files</Filter>
     </None>
-    <None Include="particles.frag">
+    <None Include="shaders\particles.frag">
       <Filter>Shader Source Files</Filter>
     </None>
   </ItemGroup>

@@ -28,6 +28,8 @@ GLuint idBufferVelocity, idBufferStartTime;
 
 C3dglSkyBox Skybox;
 
+GLuint idFireflyTex;
+
 C3dglModel Mouse;
 C3dglModel clapping;
 
@@ -112,9 +114,17 @@ bool init()
 	if (!city.load("models/kerwan.glb")) return false;
 	city.loadMaterials("models/kerwan.glb");
 
+	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	// load textures
-
+	C3dglBitmap bm;
+	bm.load("models\\firefly.png", GL_RGBA);
+	if (!bm.getBits()) return false;
+	glActiveTexture(GL_TEXTURE1);
+	glGenTextures(1, &idFireflyTex);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bm.getWidth(), bm.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bm.getBits());
 
 	// Setup the particle system
 	programParticle.sendUniform("initialPos", vec3(0.0, 0.58, 0.0));
@@ -211,6 +221,14 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = matrixView;
 	programParticle.sendUniform("matrixModelView", m);
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+	programParticle.sendUniform("texture0", 0);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDepthMask(GL_FALSE);
+
 	// render the buffer
 	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
 	GLint aStartTime = programParticle.getAttribLocation("aStartTime");
@@ -223,6 +241,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
 	glDisableVertexAttribArray(aVelocity);
 	glDisableVertexAttribArray(aStartTime);
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
 
 }
 
