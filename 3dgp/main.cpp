@@ -45,7 +45,7 @@ float _fov = 60.f;		// field of view (zoom)
 C3dglModel city;
 
 // Particle System Params
-const float PERIOD = 0.0001f;
+const float PERIOD = 0.001f;
 const float LIFETIME = 6;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
@@ -157,14 +157,15 @@ bool init()
 		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
 		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
 		float alpha = rand() % 360;
+		float r = 0 + 2.8 * (float)rand()/(float)RAND_MAX;
 
-		float x = 0; //sin(theta) * cos(phi);
+		float x = 0;
 		float y = 0.1f + 0.4f * (float)rand()/(float)RAND_MAX;
-		float z = 0; //sin(theta) * sin(phi);
+		float z = 0;
 		float v = 1;
-		float xp = -22.0f + 1 * cos(alpha);
-		float xy = 0;
-		float xz = -4.10f + 1 * sin(alpha);
+		float xp =  (-22.0f + r * cos(alpha) + 21.5);
+		float xy = 0.1;
+		float xz = (- 4.10f + r * sin(alpha) + 3.5);
 
 		bufferVelocity.push_back(x * v);
 		bufferVelocity.push_back(y * v);
