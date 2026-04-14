@@ -45,8 +45,8 @@ float _fov = 60.f;		// field of view (zoom)
 C3dglModel city;
 
 // Particle System Params
-const float PERIOD = 0.001f;
-const float LIFETIME = 4;
+const float PERIOD = 0.0001f;
+const float LIFETIME = 6;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
 bool init()
@@ -154,14 +154,17 @@ bool init()
 	for (int i = 0; i < NPARTICLES; i++)
 
 	{
+		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
+		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
+		float alpha = rand() % 360;
 
-		float x = 0;
-		float y = (rand() % 1);
-		float z = 0;
+		float x = 0; //sin(theta) * cos(phi);
+		float y = 0.1f + 0.4f * (float)rand()/(float)RAND_MAX;
+		float z = 0; //sin(theta) * sin(phi);
 		float v = 1;
-		float xp = (-rand() % 3);
+		float xp = -22.0f + 1 * cos(alpha);
 		float xy = 0;
-		float xz = (-rand() % 3);
+		float xz = -4.10f + 1 * sin(alpha);
 
 		bufferVelocity.push_back(x * v);
 		bufferVelocity.push_back(y * v);
@@ -205,7 +208,7 @@ bool init()
 	cout << "  QE or PgUp/Dn to move the camera up and down" << endl;
 	cout << "  Shift to speed up your movement" << endl;
 	cout << "  Drag the mouse to look around" << endl;
-	cout << "  Test: " << (rand() % 10) - 5.5 << endl;
+	cout << "  Test: " << (rand() % 3) + 0.5 << endl;
 	cout << endl;
 
 	return true;
@@ -244,24 +247,25 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	
 	//RENDER THE PARTICLE SYSTEM
 	glDepthMask(GL_FALSE); // disable depth buffer updates
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+
 	glActiveTexture(GL_TEXTURE0); // choose the active texture
 	glBindTexture(GL_TEXTURE_2D, texFireID); // bind the texture
 
 	glEnable(GL_POINT_SPRITE);
 	glPointSize(50);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
 	programParticle.use();
 
 	m = matrixView;
 	programParticle.sendUniform("matrixModelView", m);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
-	programParticle.sendUniform("texture0", 0);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glDepthMask(GL_FALSE);
 
 	// render the buffer
 	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
