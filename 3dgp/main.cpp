@@ -49,6 +49,10 @@ const float PERIOD = 0.001f;
 const float LIFETIME = 6;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
+GLuint idFireflyVelocity, idFireflyStartTime, idFireflyIndividualPos;
+GLuint idFireflyTexture;
+int N_FIREFLIES = 300;
+
 bool init()
 {
 	// rendering states
@@ -136,6 +140,7 @@ bool init()
 
 	bm.load("models\\firefly.png", GL_RGBA);
 	if (!bm.getBits()) return false;
+
 	glActiveTexture(GL_TEXTURE1);
 	glGenTextures(1, &idFireflyTex);
 	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
@@ -200,6 +205,25 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferIndividualPos.size(), &bufferIndividualPos[0],
 		GL_STATIC_DRAW);
 
+	std::vector<float> vVel, vStart, vPos;
+	for (int i = 0; i < N_FIREFLIES; i++) {
+		vVel.push_back(0.0f);  vVel.push_back(-1.5f); vVel.push_back(0.0f); // -1.5 Y = Downward
+		vStart.push_back((rand() % 100) / 10.0f);                          // Random birth times
+		vPos.push_back((rand() % 10) - 5); vPos.push_back(1.5f); vPos.push_back((rand() % 10) - 5);
+	}
+
+	glGenBuffers(1, &idFireflyVelocity);
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyVelocity);
+	glBufferData(GL_ARRAY_BUFFER, vVel.size() * sizeof(float), vVel.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &idFireflyStartTime);
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyStartTime);
+	glBufferData(GL_ARRAY_BUFFER, vStart.size() * sizeof(float), vStart.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &idFireflyIndividualPos);
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyIndividualPos);
+	glBufferData(GL_ARRAY_BUFFER, vPos.size() * sizeof(float), vPos.data(), GL_STATIC_DRAW);
+
 	// Initialise the View Matrix (initial position of the camera)
 	matrixView = rotate(mat4(1), radians(12.f), vec3(1, 0, 0));
 	matrixView *= lookAt(
@@ -224,6 +248,7 @@ bool init()
 
 void renderScene(mat4& matrixView, float time, float deltaTime)
 {
+	program.use();
 	mat4 m;
 	m = matrixView;
 
@@ -253,51 +278,73 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	Mouse.loadAnimations(&clapping);
 
 	
-	//RENDER THE PARTICLE SYSTEM
-	glDepthMask(GL_FALSE); // disable depth buffer updates
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
-
-	glActiveTexture(GL_TEXTURE0); // choose the active texture
-	glBindTexture(GL_TEXTURE_2D, texFireID); // bind the texture
-
+	glDepthMask(GL_FALSE);
 	glEnable(GL_POINT_SPRITE);
-	glPointSize(50);
-
+	glEnable(GL_PROGRAM_POINT_SIZE); 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE); 
 
 	programParticle.use();
+	programParticle.sendUniform("matrixModelView", matrixView);
+	programParticle.sendUniform("time", time);
 
-	m = matrixView;
-	programParticle.sendUniform("matrixModelView", m);
-
-
-
-	// render the buffer
 	GLint aVelocity = programParticle.getAttribLocation("aVelocity");
 	GLint aStartTime = programParticle.getAttribLocation("aStartTime");
 	GLint aIndividualPos = programParticle.getAttribLocation("individualPos");
-	glEnableVertexAttribArray(aVelocity); // velocity
-	glEnableVertexAttribArray(aStartTime); // start time
+
+	glEnableVertexAttribArray(aVelocity);
+	glEnableVertexAttribArray(aStartTime);
 	glEnableVertexAttribArray(aIndividualPos);
+
+	programParticle.sendUniform("gravity", vec3(0.0, 0.1, 0.0));
+	programParticle.sendUniform("initialPos", vec3(-22.0f, -3.0f, -4.10f)); 
+
+	programParticle.sendUniform("uColor", vec3(1.0f, 0.5f, 0.2f));
+
+	//Texture binding for Fire
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texFireID); 
+	programParticle.sendUniform("texture0", 0); 
+
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferVelocity);
 	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferStartTime);
 	glVertexAttribPointer(aStartTime, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferIndividualPos);
 	glVertexAttribPointer(aIndividualPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
+
+
+	programParticle.sendUniform("gravity", vec3(0.0, -0.05, 0.0));
+	programParticle.sendUniform("initialPos", vec3(0, 0, 0));      
+	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f)); 
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
+	programParticle.sendUniform("texture0", 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyVelocity);
+	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyStartTime);
+	glVertexAttribPointer(aStartTime, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, idFireflyIndividualPos);
+	glVertexAttribPointer(aIndividualPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_POINTS, 0, N_FIREFLIES);
+
+
 	glDisableVertexAttribArray(aVelocity);
 	glDisableVertexAttribArray(aStartTime);
 	glDisableVertexAttribArray(aIndividualPos);
 
-	glDepthMask(GL_TRUE);
-
-	glDepthMask(GL_TRUE);
+	glDepthMask(GL_TRUE); 
 	glDisable(GL_BLEND);
-
+	glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
 void onRender()
