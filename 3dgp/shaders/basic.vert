@@ -23,8 +23,8 @@ in vec4 aBoneWeight;
 out vec4 color;
 out vec2 texCoord0;
 
-vec4 position;
-vec3 normal;
+out vec4 position;
+out vec3 normal;
 
 struct AMBIENT
 {

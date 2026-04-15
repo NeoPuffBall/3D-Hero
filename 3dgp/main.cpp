@@ -96,7 +96,11 @@ bool init()
 
 	//Setup Directional Light
 	program.sendUniform("lightDir.direction", vec3(0.5, 0.5, 0.5));
-	program.sendUniform("lightDir.diffuse", vec3(0.6, 0.6, 0.6));
+	program.sendUniform("lightDir.diffuse", vec3(0.0, 0.0, 0.0));
+
+	//Setup Point Light
+	program.sendUniform("lightPoint.position", vec3(-22.0f, -3.0f, -4.10f));
+	program.sendUniform("lightPoint.diffuse", vec3(0.5f, 0.5f, 0.5f));
 
 	///////////////////
 	
@@ -159,13 +163,16 @@ bool init()
 		float alpha = rand() % 360;
 		float r = 0 + 2.8 * (float)rand()/(float)RAND_MAX;
 
-		float x = 0;
-		float y = 0.1f + 0.4f * (float)rand()/(float)RAND_MAX;
-		float z = 0;
 		float v = 1;
 		float xp =  (-22.0f + r * cos(alpha) + 21.5);
-		float xy = 0.1;
+		float xy = 0.1f;
 		float xz = (- 4.10f + r * sin(alpha) + 3.5);
+
+		//vec3 dir = normalize(vec3(xp - r, xy + 2.0f, xz - r) - vec3(xp, xy, xz));
+
+		float x = 0;
+		float y = 0.1f + 0.4f * (float)rand() / (float)RAND_MAX;
+		float z = 0;
 
 		bufferVelocity.push_back(x * v);
 		bufferVelocity.push_back(y * v);
