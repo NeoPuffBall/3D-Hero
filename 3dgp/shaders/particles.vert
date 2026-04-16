@@ -11,6 +11,7 @@ uniform vec3 initialPos = vec3(0,0,0); // Initial Position
 uniform vec3 gravity = vec3(0.0, -0.05, 0.0); // Gravity Acceleration in world coords
 uniform float particleLifetime; // Max Particle Lifetime
 uniform float time; // Animation Time
+uniform bool smoke = false;
 
 // Special Vertex Attributes
 in vec3 aVelocity; // Particle initial velocity
@@ -22,6 +23,7 @@ in vec3 individualPos;  // Particle individual position
 out float age; // age of the particle (0..1)
 out vec2 texCoord0;
 
+
 void main()
 {
 gl_PointSize = 20.0;
@@ -32,4 +34,9 @@ age = t / particleLifetime;
 // calculate position (normal calculation not applicable here)
 vec4 position = matrixModelView * vec4(pos, 1.0);
 gl_Position = matrixProjection * position;
+
+ if (smoke) 
+     gl_PointSize = mix(10, 100, age);
+ else 
+     gl_PointSize = 20.0f;
 }

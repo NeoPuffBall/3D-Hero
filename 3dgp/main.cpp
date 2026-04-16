@@ -24,7 +24,8 @@ C3dglProgram program, programParticle;
 // Texture ID's
 GLuint texFireID, texSmokeID;
 // Particle buffers
-GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos;
+GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
+       idSmokeVelocity, idSmokeStartTime;
 
 C3dglSkyBox Skybox;
 
@@ -49,9 +50,12 @@ const float PERIOD = 0.001f;
 const float LIFETIME = 6;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
+const float SMOKEPERIOD = 0.01f; //Time between particle spawning
+const float SMOKELIFETIME = 6; //Lifetime if the particles
+const int NSMOKEPARTICLES = (int)(SMOKELIFETIME / SMOKEPERIOD); //Number of smoke particles
+
 GLuint idFireflyVelocity, idFireflyStartTime, idFireflyIndividualPos;
-GLuint idFireflyTexture;
-int N_FIREFLIES = 300;
+int N_FIREFLIES = 300; //Number of firefly particles
 
 bool init()
 {
@@ -138,6 +142,16 @@ bool init()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fire.getWidth(), fire.getHeight(), 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, fire.getBits());
 
+	smoke.load("models\\smoke.png", GL_RGBA);
+	if (!smoke.getBits()) return false;
+
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &texSmokeID);
+	glBindTexture(GL_TEXTURE_2D, texSmokeID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, smoke.getWidth(), smoke.getHeight(), 0, GL_RGBA,
+		GL_UNSIGNED_BYTE, smoke.getBits());
+
 	bm.load("models\\firefly.png", GL_RGBA);
 	if (!bm.getBits()) return false;
 
@@ -163,8 +177,6 @@ bool init()
 	for (int i = 0; i < NPARTICLES; i++)
 
 	{
-		float theta = (float)M_PI / 6.f * (float)rand() / (float)RAND_MAX;
-		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
 		float alpha = rand() % 360;
 		float r = 0 + 2.8 * (float)rand()/(float)RAND_MAX;
 
@@ -205,6 +217,33 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferIndividualPos.size(), &bufferIndividualPos[0],
 		GL_STATIC_DRAW);
 
+	std::vector<float> sVel, sStart;
+	time = 0;
+	for (int i = 0; i < NSMOKEPARTICLES; i++)
+	{
+		float theta = 0 + (M_PI / 1.5f) * (float)rand() / (float)RAND_MAX;
+		float phi = (float)M_PI * 2.f * (float)rand() / (float)RAND_MAX;
+
+		float x = sin(theta) * cos(phi);
+		float y = cos(theta);
+		float z = sin(theta) * sin(phi);
+		float v = 0.1 + 0.1  * (float)rand() / (float)RAND_MAX;
+
+		sVel.push_back(x * v); sVel.push_back(y * v); sVel.push_back(z * v);
+		sStart.push_back(time);
+
+		time += SMOKEPERIOD;
+	}
+
+	glGenBuffers(1, &idSmokeVelocity);
+	glBindBuffer(GL_ARRAY_BUFFER, idSmokeVelocity);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * sVel.size(), &sVel[0],
+		GL_STATIC_DRAW);
+	glGenBuffers(1, &idSmokeStartTime);
+	glBindBuffer(GL_ARRAY_BUFFER, idSmokeStartTime);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * sStart.size(), &sStart[0],
+		GL_STATIC_DRAW);
+
 	std::vector<float> vVel, vStart, vPos;
 	for (int i = 0; i < N_FIREFLIES; i++) {
 		vVel.push_back(0.0f);  vVel.push_back(-1.5f); vVel.push_back(0.0f); // -1.5 Y = Downward
@@ -240,7 +279,6 @@ bool init()
 	cout << "  QE or PgUp/Dn to move the camera up and down" << endl;
 	cout << "  Shift to speed up your movement" << endl;
 	cout << "  Drag the mouse to look around" << endl;
-	cout << "  Test: " << (rand() % 3) + 0.5 << endl;
 	cout << endl;
 
 	return true;
@@ -317,10 +355,26 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
 
+	programParticle.sendUniform("initialPos", vec3(-21.5, 1, -4.0f));
+	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
+	programParticle.sendUniform("smoke", true);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texSmokeID);
+	programParticle.sendUniform("texture0", 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, idSmokeVelocity);
+	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, idSmokeStartTime);
+	glVertexAttribPointer(aStartTime, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_POINTS, 0, NSMOKEPARTICLES);
 
 	programParticle.sendUniform("gravity", vec3(0.0, -0.05, 0.0));
 	programParticle.sendUniform("initialPos", vec3(0, 0, 0));      
-	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f)); 
+	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
+	programParticle.sendUniform("smoke", false);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
