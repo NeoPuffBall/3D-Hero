@@ -22,16 +22,19 @@ using namespace glm;
 C3dglProgram program, programParticle;
 
 // Texture ID's
-GLuint texFireID, texSmokeID;
+GLuint texFireID, texSmokeID, idFireflyTex;
 // Particle buffers
 GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
-       idSmokeVelocity, idSmokeStartTime;
+       idSmokeVelocity, idSmokeStartTime,
+	   idFireflyVelocity, idFireflyStartTime, idFireflyIndividualPos;
 
-C3dglSkyBox Skybox;
+// Skybox
+C3dglSkyBox Skybox; 
 
-GLuint idFireflyTex;
-
+// Character model
 C3dglModel Mouse;
+
+// Character animation
 C3dglModel clapping;
 
 // The View Matrix
@@ -43,18 +46,19 @@ float accel = 4.f;		// camera acceleration
 vec3 _acc(0), _vel(0);	// camera acceleration and velocity vectors
 float _fov = 60.f;		// field of view (zoom)
 
+// 3D Models
 C3dglModel city;
 
-// Particle System Params
+// Particle System Params (Fire)
 const float PERIOD = 0.001f;
 const float LIFETIME = 6;
 const int NPARTICLES = (int)(LIFETIME / PERIOD);
 
+// Particle System Params (Smoke)
 const float SMOKEPERIOD = 0.01f; //Time between particle spawning
 const float SMOKELIFETIME = 6; //Lifetime if the particles
 const int NSMOKEPARTICLES = (int)(SMOKELIFETIME / SMOKEPERIOD); //Number of smoke particles
 
-GLuint idFireflyVelocity, idFireflyStartTime, idFireflyIndividualPos;
 int N_FIREFLIES = 300; //Number of firefly particles
 
 bool init()
@@ -99,6 +103,7 @@ bool init()
 	glutSetVertexAttribCoord3(program.getAttribLocation("aVertex"));
 	glutSetVertexAttribNormal(program.getAttribLocation("aNormal"));
 
+	//Setup Ambient Light
 	program.sendUniform("lightAmbient.color", vec3(0.05, 0.05, 0.05));
 	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
 
@@ -120,6 +125,7 @@ bool init()
 	if (!Mouse.load("models/Mouse.fbx")) return false;
 	Mouse.loadMaterials("models/");
 
+	//Load Clapping animation
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
@@ -129,7 +135,6 @@ bool init()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	// load textures
-
 	C3dglBitmap fire, smoke, bm;
 
 	fire.load("models/fire.png", GL_RGBA);
@@ -167,7 +172,7 @@ bool init()
 	programParticle.sendUniform("particleLifetime", LIFETIME);
 	programParticle.sendUniform("texture0", 0);
 
-	// Prepare the particle buffers
+	// Prepare the particle buffers (fire)
 	std::vector<float> bufferVelocity;
 	std::vector<float> bufferStartTime;
 	std::vector<float> bufferIndividualPos;
@@ -182,8 +187,8 @@ bool init()
 
 		float v = 1;
 		float xp =  (-22.0f + r * cos(alpha) + 21.5);
-		float xy = 0.1f;
-		float xz = (- 4.10f + r * sin(alpha) + 3.5);
+		float yp = 0.1f;
+		float zp = (- 4.10f + r * sin(alpha) + 3.5);
 
 		//vec3 dir = normalize(vec3(xp - r, xy + 2.0f, xz - r) - vec3(xp, xy, xz));
 
@@ -198,8 +203,8 @@ bool init()
 		bufferStartTime.push_back(time);
 
 		bufferIndividualPos.push_back(xp);
-		bufferIndividualPos.push_back(xy);
-		bufferIndividualPos.push_back(xz);
+		bufferIndividualPos.push_back(yp);
+		bufferIndividualPos.push_back(zp);
 
 		time += PERIOD;
 	}
@@ -217,6 +222,7 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferIndividualPos.size(), &bufferIndividualPos[0],
 		GL_STATIC_DRAW);
 
+	// Prepare the particle buffers (smoke)
 	std::vector<float> sVel, sStart;
 	time = 0;
 	for (int i = 0; i < NSMOKEPARTICLES; i++)
@@ -244,6 +250,7 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * sStart.size(), &sStart[0],
 		GL_STATIC_DRAW);
 
+	// Prepare particle buffers (fire-flies)
 	std::vector<float> vVel, vStart, vPos;
 	for (int i = 0; i < N_FIREFLIES; i++) {
 		vVel.push_back(0.0f);  vVel.push_back(-1.5f); vVel.push_back(0.0f); // -1.5 Y = Downward
@@ -315,7 +322,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
-	
+	// Use particle system
 	glDepthMask(GL_FALSE);
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_PROGRAM_POINT_SIZE); 
@@ -355,10 +362,12 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
 
+	// Setup smoke uniform variables
 	programParticle.sendUniform("initialPos", vec3(-21.5, 1, -4.0f));
 	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
 	programParticle.sendUniform("smoke", true);
 
+	//Texture binding for Smoke
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texSmokeID);
 	programParticle.sendUniform("texture0", 0);
@@ -371,11 +380,13 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	glDrawArrays(GL_POINTS, 0, NSMOKEPARTICLES);
 
+	// Set firefly uniform variables
 	programParticle.sendUniform("gravity", vec3(0.0, -0.05, 0.0));
 	programParticle.sendUniform("initialPos", vec3(0, 0, 0));      
 	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
 	programParticle.sendUniform("smoke", false);
 
+	//Texture binding for Fireflies
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
 	programParticle.sendUniform("texture0", 0);
