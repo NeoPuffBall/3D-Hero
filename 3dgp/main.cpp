@@ -28,6 +28,9 @@ GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
        idSmokeVelocity, idSmokeStartTime,
 	   idFireflyVelocity, idFireflyStartTime, idFireflyIndividualPos;
 
+// textures
+C3dglBitmap fire, smoke, bm, hMap1, hMap2;
+
 // Skybox
 C3dglSkyBox Skybox; 
 
@@ -151,7 +154,6 @@ bool init()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	// load textures
-	C3dglBitmap fire, smoke, bm;
 
 	fire.load("models/fire.png", GL_RGBA);
 	if (!fire.getBits()) return false;
@@ -185,7 +187,6 @@ bool init()
 	////////////////////////////////////////////////////
 	//cloud heightmaps for shader
 	cloudGl.use();
-	C3dglBitmap hMap1;
 	hMap1.load("models/clouds/noise1.png", GL_RGBA);
 	if (!hMap1.getBits()) return false;
 
@@ -197,7 +198,6 @@ bool init()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap1.getWidth(), hMap1.getHeight(), 0, GL_RGBA,GL_UNSIGNED_BYTE, hMap1.getBits());
 	cloudGl.sendUniform("noise1", 1);
 
-	C3dglBitmap hMap2;
 	hMap2.load("models/clouds/noise2.png", GL_RGBA);
 	if (!hMap2.getBits()) return false;
 
@@ -206,7 +206,7 @@ bool init()
 	glGenTextures(1, &noise2);
 	glBindTexture(GL_TEXTURE_2D, noise2);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap2.getWidth(), hMap2.getHeight(), 0, GL_RGBA,GL_UNSIGNED_BYTE, hMap2.getBits());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap2.getWidth(), hMap2.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, hMap2.getBits());
 	cloudGl.sendUniform("noise2", 2);
 
 	// Setup the particle system
@@ -367,12 +367,26 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	cloudGl.use();
 	m = matrixView;
-	m = scale(m, vec3(100, 100, 100));
 	cloudGl.sendUniform("t", time);
-	cloudGl.sendUniform("vertPos", -11);
-	cloudGl.sendUniform("transparency", 1.0f);
-	cloudGl.sendUniform("clipping", 0.2f);
+	cloudGl.sendUniform("vertPos", -11.5);
+	cloudGl.sendUniform("transparency", 0.4f);
+	cloudGl.sendUniform("clipping", 0.5f);
+	cloudGl.sendUniform("n1Speed", vec2(-0.5f, 0.5f));
+	cloudGl.sendUniform("n2Speed", vec2(0.6f, -0.5f));
+	cloudGl.sendUniform("noise1", 1);
+	cloudGl.sendUniform("noise2", 1);
 	clouds.render(m);
+
+	m = matrixView;
+	cloudGl.sendUniform("vertPos", -10.5);
+	cloudGl.sendUniform("transparency", 0.1f);
+	cloudGl.sendUniform("clipping", 0.25f);
+	cloudGl.sendUniform("n1Speed", vec2(0.25f, -0.1f));
+	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
+	cloudGl.sendUniform("noise1", 2);
+	cloudGl.sendUniform("noise2", 1);
+	clouds.render(m);
+
 
 	// Use particle system
 	glDepthMask(GL_FALSE);

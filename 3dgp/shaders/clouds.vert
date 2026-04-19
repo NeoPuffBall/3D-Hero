@@ -1,24 +1,20 @@
 #version 330
 
-uniform mat4 matrixProjection;
-uniform mat4 matrixView;
+uniform mat4 matrixProjection, matrixView;
 uniform vec3 material;
-uniform float t;
-
-uniform float vertPos;
-uniform float transparency;
-
+uniform float t, vertPos, transparency;
 uniform sampler2D noise1,noise2;
+uniform vec2 n1Speed, n2Speed;
 
-in vec3 aVertex;
-in vec3 aNormal;
+in vec3 aVertex, aNormal;
 in vec2 aTexCoord;
 
 out vec4 color;
 
 float wave(float a, float x, float y, float t){
 	t *= 0.05;
-	return texture(noise1,aTexCoord+vec2(x+t,y)).r * texture(noise2,aTexCoord+vec2(x-t*1.2,y+t)).r;
+	return texture(noise1, aTexCoord + vec2(x + (t * n1Speed.x), y * t * n1Speed.y)).r * 
+		   texture(noise2, aTexCoord + vec2(x + t * n2Speed.x, y + t * n2Speed.y)).r;
 }
 
 void main(void) 
