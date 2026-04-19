@@ -255,10 +255,9 @@ bool init()
 	std::vector<float> vVel, vStart, vPos;
 	for (int i = 0; i < N_FIREFLIES; i++) {
 		float alpha = rand() % 360;
-		float r = -30.0f + 60.0f * (float)rand() / (float)RAND_MAX;
+		float r = -30.0f + 60.0f * (float)rand() / (float)RAND_MAX; //Random radius between -30 and 30
 		float rv = -1.0f + 2.0f * (float)rand() / RAND_MAX; //Random value between -1 and 1 (Velocity)
 		float rs = -5.0f + 10.0f * (float)rand() / RAND_MAX; //Random value between -10 and 10 (Scale)
-		float rp = (rand() % 10) - 5;
 		vVel.push_back(rv * rs);  vVel.push_back(rv * rs); vVel.push_back(rv * rs); //Random velocity
 		vStart.push_back((rand() % 100) / 10.0f); // Random birth times
 		vPos.push_back((20 + r * cos(alpha)) + 20); vPos.push_back(7.5f); vPos.push_back((-6.25 + r * sin(alpha)) - 6.25);
