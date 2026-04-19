@@ -32,7 +32,8 @@ GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
 C3dglSkyBox Skybox; 
 
 // 3D Models
-C3dglModel city, Mouse,clouds;
+C3dglModel city, Mouse, clouds;
+//C3dglTerrain clouds;
 
 // Character animation
 C3dglModel clapping;
@@ -123,11 +124,12 @@ bool init()
 	program.sendUniform("lightPoint.diffuse", vec3(0.5f, 0.5f, 0.5f));
 
 	cloudGl.sendUniform("material", vec3(1, 1, 1));
-	///////////////////
-	
+
+	/////////////////////////////////////////////////////////////////////////
+	program.use();
 	//Load Skybox
 	if (!Skybox.load("models\\Sky_posz.png", "models\\Sky_posx.png", "models\\Sky_negz.png",
-		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png",&program)) return false;
+		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
 
 	//Load Mouse
 	if (!Mouse.load("models/Mouse.fbx")) return false;
@@ -137,10 +139,11 @@ bool init()
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	//if (!city.load("models/kerwan.glb", &program)) return false;
-	//city.loadMaterials("models/kerwan.glb");
+	if (!city.load("models/kerwan.glb")) return false;
+	city.loadMaterials("models/kerwan.glb");
 
-	if (!clouds.load("models/clouds/cloudmesh.glb",1, &cloudGl)) return false;
+	if (!clouds.load("models/clouds/cloudmesh.glb",1,&cloudGl)) return false;
+	program.use();
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -303,10 +306,11 @@ bool init()
 
 void renderScene(mat4& matrixView, float time, float deltaTime)
 {
-	program.use();
 	mat4 m;
 	m = matrixView;
 
+	program.use();
+	
 	program.sendUniform("lightAmbient.color", vec3(1.0f, 1.0f, 1.0f));
 	program.sendUniform("materialAmbient", vec3(1.0f, 1.0f, 1.0f));
 	program.sendUniform("materialDiffuse", vec3(0.0f, 0.0f, 0.0f));
@@ -316,11 +320,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	program.sendUniform("lightAmbient.color", vec3(1, 1, 1));
 
-	//m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
-	//city.render(m);
-
-	cloudGl.use();
-	clouds.render(m);
+	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
+	city.render(m);
 
 	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
@@ -333,6 +334,14 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = rotate(m, radians(40.0f), vec3(0, 1, 0));
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
+
+	m = matrixView;
+
+	cloudGl.use();
+	cloudGl.sendUniform("t", time);
+	//m = scale(m, vec3(1, 10, 1));
+	//m = translate(m, vec3(1, -100, 1));
+	clouds.render(m);
 
 	// Use particle system
 	glDepthMask(GL_FALSE);
