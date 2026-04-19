@@ -60,28 +60,28 @@ return color;
 
 void main(void) 
 {
-mat4 matrixBone;
-if (aBoneWeight[0] == 0.0)
-    matrixBone = mat4(1);
-else
-    matrixBone = (bones[aBoneId[0]] * aBoneWeight[0] +
-    bones[aBoneId[1]] * aBoneWeight[1] +
-    bones[aBoneId[2]] * aBoneWeight[2] +
-    bones[aBoneId[3]] * aBoneWeight[3]);
+    mat4 matrixBone;
+    if (aBoneWeight[0] == 0.0)
+        matrixBone = mat4(1);
+    else
+        matrixBone = (bones[aBoneId[0]] * aBoneWeight[0] +
+        bones[aBoneId[1]] * aBoneWeight[1] +
+        bones[aBoneId[2]] * aBoneWeight[2] +
+        bones[aBoneId[3]] * aBoneWeight[3]);
 
-// calculate position
-position = matrixModelView * matrixBone * vec4(aVertex, 1.0);
-gl_Position = matrixProjection * position;
+    // calculate position
+    position = matrixModelView * matrixBone * vec4(aVertex, 1.0);
+    gl_Position = matrixProjection * position;
 
-// calculate normal
-normal = normalize(mat3(matrixModelView) * mat3(matrixBone) * aNormal);
+    // calculate normal
+    normal = normalize(mat3(matrixModelView) * mat3(matrixBone) * aNormal);
 
-// calculate light
-color = vec4(0, 0, 0, 1);
-color += AmbientLight(lightAmbient);
-color += DirectionalLight(lightDir);
+    // calculate light
+    color = vec4(0, 0, 0, 1);
+    color += AmbientLight(lightAmbient);
+    color += DirectionalLight(lightDir);
 
-fogFactor = exp2(-fogDensity * length(position));
+    fogFactor = exp2(-fogDensity * length(position));
 
-texCoord0 = aTexCoord;
+    texCoord0 = aTexCoord;
 }

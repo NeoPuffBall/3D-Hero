@@ -12,7 +12,7 @@ out vec4 outColor;
 
 void main(void) 
 {
-	if (color.r < clipping)
+	if (color.a < clipping)
 	{
 		outColor = vec4(1,1,1,0);
 	}
