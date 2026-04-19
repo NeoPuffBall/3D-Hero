@@ -327,6 +327,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
+	program.sendUniform("fogColour", vec3(0.5f, 0.6f, 0.7f));
+	program.sendUniform("fogDensity", 0.1f);
+
 	// Use particle system
 	glDepthMask(GL_FALSE);
 	glEnable(GL_POINT_SPRITE);

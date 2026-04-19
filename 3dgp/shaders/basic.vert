@@ -26,6 +26,10 @@ out vec2 texCoord0;
 out vec4 position;
 out vec3 normal;
 
+uniform float fogDensity;
+
+out float fogFactor;
+
 struct AMBIENT
 {
 	vec3 color;
@@ -76,6 +80,8 @@ normal = normalize(mat3(matrixModelView) * mat3(matrixBone) * aNormal);
 color = vec4(0, 0, 0, 1);
 color += AmbientLight(lightAmbient);
 color += DirectionalLight(lightDir);
+
+fogFactor = exp2(-fogDensity * length(position));
 
 texCoord0 = aTexCoord;
 }
