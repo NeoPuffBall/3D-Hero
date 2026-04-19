@@ -25,6 +25,10 @@ in vec2 texCoord0;
 in vec4 position;
 in vec3 normal;
 
+uniform vec3 fogColour;
+
+in float fogFactor;
+
 out vec4 outColor;
 
 vec4 PositionalLight(POINT light)
@@ -41,4 +45,5 @@ void main(void)
   outColor = color;
   outColor += PositionalLight(lightPoint);
   outColor *= texture(texture0, texCoord0);
+  outColor = mix(vec4(fogColour, 1), outColor, fogFactor);
 }
