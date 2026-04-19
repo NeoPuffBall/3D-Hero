@@ -6,9 +6,18 @@ in vec4 color;
 in vec4 position;
 in vec3 normal;
 
+uniform float clipping;
+
 out vec4 outColor;
 
 void main(void) 
 {
-  outColor = color;
+	if (color.r < clipping)
+	{
+		outColor = vec4(1,1,1,0);
+	}
+	else
+	{
+		outColor = color + vec4(0.3f,0.3f,0.35f,0);
+	}
 }

@@ -33,7 +33,7 @@ C3dglSkyBox Skybox;
 
 // 3D Models
 C3dglModel city, Mouse;
-C3dglTerrain clouds;
+C3dglModel clouds;
 
 // Character animation
 C3dglModel clapping;
@@ -142,10 +142,10 @@ bool init()
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	//if (!city.load("models/kerwan.glb")) return false;
-	//city.loadMaterials("models/kerwan.glb");
+	if (!city.load("models/kerwan.glb")) return false;
+	city.loadMaterials("models/kerwan.glb");
 
-	if (!clouds.load("models/clouds/noise1.png",10,&cloudGl)) return false;
+	if (!clouds.load("models/clouds/cloudmap.glb",10,&cloudGl)) return false;
 	program.use();
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
@@ -350,8 +350,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	program.sendUniform("lightAmbient.color", vec3(1, 1, 1));
 
-	//m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
-	//city.render(m);
+	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
+	city.render(m);
 
 	/*std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
@@ -367,7 +367,11 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	cloudGl.use();
 	m = matrixView;
+	m = scale(m, vec3(100, 100, 100));
 	cloudGl.sendUniform("t", time);
+	cloudGl.sendUniform("vertPos", -11);
+	cloudGl.sendUniform("transparency", 1.0f);
+	cloudGl.sendUniform("clipping", 0.2f);
 	clouds.render(m);
 
 	// Use particle system
@@ -456,8 +460,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDisableVertexAttribArray(aIndividualPos);
 
 	glDepthMask(GL_TRUE); 
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glDisable(GL_PROGRAM_POINT_SIZE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void onRender()
