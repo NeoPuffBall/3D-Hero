@@ -19,7 +19,7 @@ using namespace glm;
 
 
 // GLSL Program
-C3dglProgram program, programParticle;
+C3dglProgram program, programParticle,cloudGl;
 
 // Texture ID's
 GLuint texFireID, texSmokeID, idFireflyTex;
@@ -31,8 +31,8 @@ GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
 // Skybox
 C3dglSkyBox Skybox; 
 
-// Character model
-C3dglModel Mouse;
+// 3D Models
+C3dglModel city, Mouse,clouds;
 
 // Character animation
 C3dglModel clapping;
@@ -46,8 +46,6 @@ float accel = 4.f;		// camera acceleration
 vec3 _acc(0), _vel(0);	// camera acceleration and velocity vectors
 float _fov = 60.f;		// field of view (zoom)
 
-// 3D Models
-C3dglModel city;
 
 // Particle System Params (Fire)
 const float PERIOD = 0.001f;
@@ -70,10 +68,7 @@ bool init()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	// this is the default one; try GL_LINE!
 
 	// Initialise Shaders
-	C3dglShader vertexShader;
-	C3dglShader fragmentShader;
-	C3dglShader vertexParticles;
-	C3dglShader fragmentParticles;
+	C3dglShader vertexShader,fragmentShader, vertexParticles,fragmentParticles, vertexClouds,fragmentClouds;
 
 	if (!vertexShader.create(GL_VERTEX_SHADER)) return false;
 	if (!vertexShader.loadFromFile("shaders/basic.vert")) return false;
@@ -99,6 +94,18 @@ bool init()
 	if (!programParticle.link()) return false;
 	if (!programParticle.use(true)) return false;
 
+	if (!vertexClouds.create(GL_VERTEX_SHADER)) return false;
+	if (!vertexClouds.loadFromFile("shaders/clouds.vert")) return false;
+	if (!vertexClouds.compile()) return false;
+	if (!fragmentClouds.create(GL_FRAGMENT_SHADER)) return false;
+	if (!fragmentClouds.loadFromFile("shaders/clouds.frag")) return false;
+	if (!fragmentClouds.compile()) return false;
+	if (!cloudGl.create()) return false;
+	if (!cloudGl.attach(vertexClouds)) return false;
+	if (!cloudGl.attach(fragmentClouds)) return false;
+	if (!cloudGl.link()) return false;
+	if (!cloudGl.use(true)) return false;
+
 	// glut additional setup
 	glutSetVertexAttribCoord3(program.getAttribLocation("aVertex"));
 	glutSetVertexAttribNormal(program.getAttribLocation("aNormal"));
@@ -115,11 +122,12 @@ bool init()
 	program.sendUniform("lightPoint.position", vec3(-22.0f, -3.0f, -4.10f));
 	program.sendUniform("lightPoint.diffuse", vec3(0.5f, 0.5f, 0.5f));
 
+	cloudGl.sendUniform("material", vec3(1, 1, 1));
 	///////////////////
 	
 	//Load Skybox
 	if (!Skybox.load("models\\Sky_posz.png", "models\\Sky_posx.png", "models\\Sky_negz.png",
-		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
+		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png",&program)) return false;
 
 	//Load Mouse
 	if (!Mouse.load("models/Mouse.fbx")) return false;
@@ -129,8 +137,10 @@ bool init()
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	if (!city.load("models/kerwan.glb")) return false;
-	city.loadMaterials("models/kerwan.glb");
+	//if (!city.load("models/kerwan.glb", &program)) return false;
+	//city.loadMaterials("models/kerwan.glb");
+
+	if (!clouds.load("models/clouds/cloudmesh.glb",1, &cloudGl)) return false;
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -306,9 +316,11 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	program.sendUniform("lightAmbient.color", vec3(1, 1, 1));
 
-	program.sendUniform("materialDiffuse", vec3(1, 1, 1));
-	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
-	city.render(m);
+	//m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
+	//city.render(m);
+
+	cloudGl.use();
+	clouds.render(m);
 
 	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
@@ -434,6 +446,7 @@ void onRender()
 
 	// setup View Matrix
 	program.sendUniform("matrixView", matrixView);
+	cloudGl.sendUniform("matrixView", matrixView);
 
 	// send time to particle shaders
 	programParticle.sendUniform("time", time);
@@ -458,6 +471,7 @@ void onReshape(int w, int h)
 	// Setup the Projection Matrix
 	mat4 m = perspective(radians(60.f), ratio, 0.02f, 1000.f);
 	program.sendUniform("matrixProjection", m);
+	cloudGl.sendUniform("matrixProjection", m);
 	programParticle.sendUniform("matrixProjection", m);
 }
 

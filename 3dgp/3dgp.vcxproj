@@ -170,6 +170,8 @@
   <ItemGroup>
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
+    <None Include="shaders\clouds.frag" />
+    <None Include="shaders\clouds.vert" />
     <None Include="shaders\particles.frag" />
     <None Include="shaders\particles.vert" />
   </ItemGroup>

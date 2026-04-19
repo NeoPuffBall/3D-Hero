@@ -30,6 +30,12 @@
     <None Include="shaders\particles.frag">
       <Filter>Shader Source Files</Filter>
     </None>
+    <None Include="shaders\clouds.frag">
+      <Filter>Shader Source Files</Filter>
+    </None>
+    <None Include="shaders\clouds.vert">
+      <Filter>Shader Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
