@@ -59,6 +59,7 @@ const float SMOKEPERIOD = 0.01f; //Time between particle spawning
 const float SMOKELIFETIME = 6; //Lifetime if the particles
 const int NSMOKEPARTICLES = (int)(SMOKELIFETIME / SMOKEPERIOD); //Number of smoke particles
 
+
 int N_FIREFLIES = 300; //Number of firefly particles
 
 bool init()
@@ -109,11 +110,11 @@ bool init()
 
 	//Setup Directional Light
 	program.sendUniform("lightDir.direction", vec3(0.5, 0.5, 0.5));
-	program.sendUniform("lightDir.diffuse", vec3(0.0, 0.0, 0.0));
+	program.sendUniform("lightDir.diffuse", vec3(0.6, 0.6, 0.6));
 
 	//Setup Point Light
 	program.sendUniform("lightPoint.position", vec3(-22.0f, -3.0f, -4.10f));
-	program.sendUniform("lightPoint.diffuse", vec3(0.5f, 0.5f, 0.5f));
+	program.sendUniform("lightPoint.diffuse", vec3(0.8f, 0.8f, 0.8f));
 
 	///////////////////
 	
@@ -222,7 +223,7 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * bufferIndividualPos.size(), &bufferIndividualPos[0],
 		GL_STATIC_DRAW);
 
-	// Prepare the particle buffers (smoke)
+	// Prepare the particle buffers (Smoke)
 	std::vector<float> sVel, sStart;
 	time = 0;
 	for (int i = 0; i < NSMOKEPARTICLES; i++)
@@ -250,12 +251,17 @@ bool init()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * sStart.size(), &sStart[0],
 		GL_STATIC_DRAW);
 
-	// Prepare particle buffers (fire-flies)
+	// Prepare particle buffers (Fireflies)
 	std::vector<float> vVel, vStart, vPos;
 	for (int i = 0; i < N_FIREFLIES; i++) {
-		vVel.push_back(0.0f);  vVel.push_back(-1.5f); vVel.push_back(0.0f); // -1.5 Y = Downward
-		vStart.push_back((rand() % 100) / 10.0f);                          // Random birth times
-		vPos.push_back((rand() % 10) - 5); vPos.push_back(1.5f); vPos.push_back((rand() % 10) - 5);
+		float alpha = rand() % 360;
+		float r = -30.0f + 60.0f * (float)rand() / (float)RAND_MAX;
+		float rv = -1.0f + 2.0f * (float)rand() / RAND_MAX; //Random value between -1 and 1 (Velocity)
+		float rs = -5.0f + 10.0f * (float)rand() / RAND_MAX; //Random value between -10 and 10 (Scale)
+		float rp = (rand() % 10) - 5;
+		vVel.push_back(rv * rs);  vVel.push_back(rv * rs); vVel.push_back(rv * rs); //Random velocity
+		vStart.push_back((rand() % 100) / 10.0f); // Random birth times
+		vPos.push_back((20 + r * cos(alpha)) + 20); vPos.push_back(7.5f); vPos.push_back((-6.25 + r * sin(alpha)) - 6.25);
 	}
 
 	glGenBuffers(1, &idFireflyVelocity);
@@ -382,7 +388,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	// Set firefly uniform variables
 	programParticle.sendUniform("gravity", vec3(0.0, -0.05, 0.0));
-	programParticle.sendUniform("initialPos", vec3(0, 0, 0));      
+	programParticle.sendUniform("initialPos", vec3(20, 1.5f, -6.25));      
 	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
 	programParticle.sendUniform("smoke", false);
 
