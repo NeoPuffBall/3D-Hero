@@ -118,8 +118,9 @@ bool init()
 	glutSetVertexAttribNormal(cloudGl.getAttribLocation("aTexCoord"));
 
 	//Setup Ambient Light
-	program.sendUniform("lightAmbient.color", vec3(0.05, 0.05, 0.05));
-	program.sendUniform("materialAmbient", vec3(0.3, 0.3, 0.3));
+	program.sendUniform("lightAmbient.color", vec3(1.0f, 1.0f, 1.0f));
+	program.sendUniform("materialDiffuse", vec3(0.0f, 0.0f, 0.0f));
+	program.sendUniform("materialAmbient", vec3(1.0f, 1.0f, 1.0f));
 
 	//Setup Directional Light
 	program.sendUniform("lightDir.direction", vec3(0.5, 0.5, 0.5));
@@ -138,8 +139,8 @@ bool init()
 		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
 
 	//Load Mouse
-	//if (!Mouse.load("models/Mouse.fbx")) return false;
-	//Mouse.loadMaterials("models/");
+	if (!Mouse.load("models/Mouse.fbx")) return false;
+	Mouse.loadMaterials("models/");
 
 	//Load Clapping animation
 	if (!clapping.load("models/Clapping.fbx")) return false;
@@ -208,6 +209,7 @@ bool init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap2.getWidth(), hMap2.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, hMap2.getBits());
 	cloudGl.sendUniform("noise2", 2);
+
 
 	// Setup the particle system
 	programParticle.sendUniform("initialPos", vec3(-22.0f,-3.0f,-4.10f));
@@ -340,10 +342,6 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = matrixView;
 
 	program.use();
-	
-	program.sendUniform("lightAmbient.color", vec3(1.0f, 1.0f, 1.0f));
-	program.sendUniform("materialAmbient", vec3(1.0f, 1.0f, 1.0f));
-	program.sendUniform("materialDiffuse", vec3(0.0f, 0.0f, 0.0f));
 
 	//Render the skybox
 	Skybox.render(m);
@@ -353,7 +351,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
 	city.render(m);
 
-	/*std::vector<mat4> transforms;
+	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
 	program.sendUniform("bones", &transforms[0], transforms.size());
 
@@ -363,22 +361,24 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = scale(m, vec3(0.001f, 0.001f, 0.001f));
 	m = rotate(m, radians(40.0f), vec3(0, 1, 0));
 	Mouse.render(m);
-	Mouse.loadAnimations(&clapping);*/
+	Mouse.loadAnimations(&clapping);
 
+	// Clouds under city
 	cloudGl.use();
 	m = matrixView;
 	cloudGl.sendUniform("t", time);
+	cloudGl.sendUniform("a", 1.f);
 	cloudGl.sendUniform("vertPos", -11.5);
-	cloudGl.sendUniform("transparency", 0.4f);
-	cloudGl.sendUniform("clipping", 0.5f);
+	cloudGl.sendUniform("transparency", 0.7f);
+	cloudGl.sendUniform("clipping", 0.25f);
 	cloudGl.sendUniform("n1Speed", vec2(-0.5f, 0.5f));
 	cloudGl.sendUniform("n2Speed", vec2(0.6f, -0.5f));
 	cloudGl.sendUniform("noise1", 1);
 	cloudGl.sendUniform("noise2", 1);
 	clouds.render(m);
 
-	m = matrixView;
 	cloudGl.sendUniform("vertPos", -10.5);
+	cloudGl.sendUniform("a", 1.f);
 	cloudGl.sendUniform("transparency", 0.1f);
 	cloudGl.sendUniform("clipping", 0.25f);
 	cloudGl.sendUniform("n1Speed", vec2(0.25f, -0.1f));
@@ -387,6 +387,25 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	cloudGl.sendUniform("noise2", 1);
 	clouds.render(m);
 
+	cloudGl.sendUniform("vertPos", -7.5f);
+	cloudGl.sendUniform("a", 0.5f);
+	cloudGl.sendUniform("transparency", 0.f);
+	cloudGl.sendUniform("clipping", 0.f);
+	cloudGl.sendUniform("n1Speed", vec2(0.f, -0.1f));
+	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
+	cloudGl.sendUniform("noise1", 2);
+	cloudGl.sendUniform("noise2", 2);
+	clouds.render(m);
+
+	cloudGl.sendUniform("vertPos", 9);
+	cloudGl.sendUniform("a", 3.f);
+	cloudGl.sendUniform("transparency", 0.1f);
+	cloudGl.sendUniform("clipping", 0.7f);
+	cloudGl.sendUniform("n1Speed", vec2(0.f, -0.1f));
+	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
+	cloudGl.sendUniform("noise1", 2);
+	cloudGl.sendUniform("noise2", 2);
+	clouds.render(m);
 
 	// Use particle system
 	glDepthMask(GL_FALSE);
