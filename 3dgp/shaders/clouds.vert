@@ -1,5 +1,3 @@
-// VERTEX SHADER
-
 #version 330
 
 uniform mat4 matrixProjection;
@@ -7,19 +5,17 @@ uniform mat4 matrixView;
 uniform vec3 material;
 uniform float t;
 
-
+uniform sampler2D noise1,noise2;
 
 in vec3 aVertex;
 in vec3 aNormal;
+in vec2 aTexCoord;
 
 out vec4 color;
 
-float wave(float A, float x, float y, float t){
-	t *= 2;
-	return A * (sin(0.5f * (x * 0.2 + y * 0.7) + t * 1.0) +
-	sin(0.5f * (x * 0.7 + y * 0.2) + t * 0.8) +
-	pow(sin(0.5f * (x * 0.6 + y * 0.5) + t * 1.2), 2) +
-	pow(sin(0.5f * (x * 0.8 + y * 0.2) - t * 1.1), 2));
+float wave(float a, float x, float y, float t){
+	t *= 0.1;
+	return texture(noise2,aTexCoord+vec2(x+t,y)).r;
 }
 
 void main(void) 
@@ -33,7 +29,7 @@ void main(void)
 	vec3 newVertex = vec3(aVertex.x, y, aVertex.z);
 	vec3 newNormal = normalize(vec3(-dx, 1, -dz));
 
-	vec4 pos = matrixProjection * matrixView * vec4(newVertex, 1.0);
+	vec4 pos = matrixProjection * matrixView * vec4(newVertex-vec3(0,10,0), 1.0);
 
 	gl_Position = pos;
 

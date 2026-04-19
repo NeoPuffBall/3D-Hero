@@ -32,8 +32,8 @@ GLuint idBufferVelocity, idBufferStartTime, idBufferIndividualPos,
 C3dglSkyBox Skybox; 
 
 // 3D Models
-C3dglModel city, Mouse, clouds;
-//C3dglTerrain clouds;
+C3dglModel city, Mouse;
+C3dglTerrain clouds;
 
 // Character animation
 C3dglModel clapping;
@@ -110,6 +110,9 @@ bool init()
 	// glut additional setup
 	glutSetVertexAttribCoord3(program.getAttribLocation("aVertex"));
 	glutSetVertexAttribNormal(program.getAttribLocation("aNormal"));
+	glutSetVertexAttribCoord3(cloudGl.getAttribLocation("aVertex"));
+	glutSetVertexAttribNormal(cloudGl.getAttribLocation("aNormal"));
+	glutSetVertexAttribNormal(cloudGl.getAttribLocation("aTexCoord"));
 
 	//Setup Ambient Light
 	program.sendUniform("lightAmbient.color", vec3(0.05, 0.05, 0.05));
@@ -132,17 +135,17 @@ bool init()
 		"models\\Sky_negx.png", "models\\Sky_posy.png", "models\\Sky_negy.png")) return false;
 
 	//Load Mouse
-	if (!Mouse.load("models/Mouse.fbx")) return false;
-	Mouse.loadMaterials("models/");
+	//if (!Mouse.load("models/Mouse.fbx")) return false;
+	//Mouse.loadMaterials("models/");
 
 	//Load Clapping animation
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// Models
-	if (!city.load("models/kerwan.glb")) return false;
-	city.loadMaterials("models/kerwan.glb");
+	//if (!city.load("models/kerwan.glb")) return false;
+	//city.loadMaterials("models/kerwan.glb");
 
-	if (!clouds.load("models/clouds/cloudmesh.glb",1,&cloudGl)) return false;
+	if (!clouds.load("models/clouds/noise1.png",10,&cloudGl)) return false;
 	program.use();
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
@@ -178,6 +181,33 @@ bool init()
 	glBindTexture(GL_TEXTURE_2D, idFireflyTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bm.getWidth(), bm.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bm.getBits());
+
+	////////////////////////////////////////////////////
+	//cloud heightmaps for shader
+	cloudGl.use();
+	C3dglBitmap hMap1;
+	hMap1.load("models/clouds/noise1.png", GL_RGBA);
+	if (!hMap1.getBits()) return false;
+
+	GLuint noise1;
+	glActiveTexture(GL_TEXTURE1);
+	glGenTextures(1, &noise1);
+	glBindTexture(GL_TEXTURE_2D, noise1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap1.getWidth(), hMap1.getHeight(), 0, GL_RGBA,GL_UNSIGNED_BYTE, hMap1.getBits());
+	cloudGl.sendUniform("noise1", 1);
+
+	C3dglBitmap hMap2;
+	hMap2.load("models/clouds/noise2.png", GL_RGBA);
+	if (!hMap2.getBits()) return false;
+
+	GLuint noise2;
+	glActiveTexture(GL_TEXTURE2);
+	glGenTextures(1, &noise2);
+	glBindTexture(GL_TEXTURE_2D, noise2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hMap2.getWidth(), hMap2.getHeight(), 0, GL_RGBA,GL_UNSIGNED_BYTE, hMap2.getBits());
+	cloudGl.sendUniform("noise2", 2);
 
 	// Setup the particle system
 	programParticle.sendUniform("initialPos", vec3(-22.0f,-3.0f,-4.10f));
@@ -320,10 +350,10 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	program.sendUniform("lightAmbient.color", vec3(1, 1, 1));
 
-	m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
-	city.render(m);
+	//m = translate(m, vec3(-20.885f, -4.315f, 7.75f));
+	//city.render(m);
 
-	std::vector<mat4> transforms;
+	/*std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
 	program.sendUniform("bones", &transforms[0], transforms.size());
 
@@ -333,14 +363,11 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = scale(m, vec3(0.001f, 0.001f, 0.001f));
 	m = rotate(m, radians(40.0f), vec3(0, 1, 0));
 	Mouse.render(m);
-	Mouse.loadAnimations(&clapping);
-
-	m = matrixView;
+	Mouse.loadAnimations(&clapping);*/
 
 	cloudGl.use();
+	m = matrixView;
 	cloudGl.sendUniform("t", time);
-	//m = scale(m, vec3(1, 10, 1));
-	//m = translate(m, vec3(1, -100, 1));
 	clouds.render(m);
 
 	// Use particle system
