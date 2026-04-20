@@ -147,8 +147,8 @@ bool init()
 	if (!clapping.load("models/Clapping.fbx")) return false;
 
 	// city
-	//if (!city.load("models/kerwan.glb")) return false;
-	//city.loadMaterials("models/kerwan.glb");
+	if (!city.load("models/kerwan.glb")) return false;
+	city.loadMaterials("models/kerwan.glb");
 
 	if (!clouds.load("models/clouds/cloudmap.glb",10,&cloudGl)) return false;
 	program.use();
@@ -341,6 +341,7 @@ bool init()
 	return true;
 }
 
+
 void renderScene(mat4& matrixView, float time, float deltaTime)
 {
 	mat4 m;
@@ -351,8 +352,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	//Render the skybox
 	Skybox.render(m);
 
-	m = translate(m, vec3(2.7, 1.5, 23.2));
-	//city.render(m);
+	m = translate(m, vec3(2.75, 2, 23.5));
+	city.render(m);
 
 	std::vector<mat4> transforms;
 	Mouse.getAnimData(0, time, transforms);
@@ -360,9 +361,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	// Mouse
 	m = matrixView;
-	m = translate(m, vec3(0, 0, 0));
+	m = translate(m, vec3(4, 1.25, 29.5));
 	m = scale(m, vec3(0.002f, 0.002f, 0.002f));
-	m = rotate(m, radians(40.0f), vec3(0, 1, 0));
 	Mouse.render(m);
 	Mouse.loadAnimations(&clapping);
 
@@ -371,26 +371,26 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	m = matrixView;
 	cloudGl.sendUniform("t", time);
 	cloudGl.sendUniform("a", 1.f);
-	cloudGl.sendUniform("vertPos", -11.5);
-	cloudGl.sendUniform("transparency", 0.7f);
-	cloudGl.sendUniform("clipping", 0.9f);
+	cloudGl.sendUniform("vertPos", -5.2);
+	cloudGl.sendUniform("transparency", 0.5f);
+	cloudGl.sendUniform("clipping", 0.85f);
 	cloudGl.sendUniform("n1Speed", vec2(-0.5f, 0.5f));
 	cloudGl.sendUniform("n2Speed", vec2(0.6f, -0.5f));
 	cloudGl.sendUniform("noise1", 1);
 	cloudGl.sendUniform("noise2", 1);
 	clouds.render(m);
 
-	cloudGl.sendUniform("vertPos", -10.5);
+	cloudGl.sendUniform("vertPos", -3.7f);
 	cloudGl.sendUniform("a", 1.f);
-	cloudGl.sendUniform("transparency", 0.1f);
-	cloudGl.sendUniform("clipping", 0.7f);
+	cloudGl.sendUniform("transparency", 0.5f);
+	cloudGl.sendUniform("clipping", 0.8f);
 	cloudGl.sendUniform("n1Speed", vec2(0.25f, -0.1f));
 	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
 	cloudGl.sendUniform("noise1", 2);
 	cloudGl.sendUniform("noise2", 1);
 	clouds.render(m);
 
-	cloudGl.sendUniform("vertPos", -7.5f);
+	cloudGl.sendUniform("vertPos", -2);
 	cloudGl.sendUniform("a", 0.5f);
 	cloudGl.sendUniform("transparency", 0.1f);
 	cloudGl.sendUniform("clipping", 0.2f);
@@ -400,7 +400,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	cloudGl.sendUniform("noise2", 2);
 	clouds.render(m);
 
-	cloudGl.sendUniform("vertPos", 15);
+	cloudGl.sendUniform("vertPos", 20);
 	cloudGl.sendUniform("a", 3.f);
 	cloudGl.sendUniform("transparency", 0.1f);
 	cloudGl.sendUniform("clipping", 0.98f);
@@ -416,9 +416,9 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	// Use particle system
 	glDepthMask(GL_FALSE);
 	glEnable(GL_POINT_SPRITE);
-	glEnable(GL_PROGRAM_POINT_SIZE); 
+	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE); 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	programParticle.use();
 	programParticle.sendUniform("matrixModelView", matrixView);
@@ -433,13 +433,13 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glEnableVertexAttribArray(aIndividualPos);
 
 	programParticle.sendUniform("gravity", vec3(0.0, 0.1, 0.0));
-	programParticle.sendUniform("initialPos", vec3(1.5, 2.7, 12));
+	programParticle.sendUniform("initialPos", vec3(1.7, 3.7, 11.3));
 	programParticle.sendUniform("uColor", vec3(1.0f, 0.5f, 0.2f));
 
 	//Texture binding for Fire
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texFireID); 
-	programParticle.sendUniform("texture0", 0); 
+	glBindTexture(GL_TEXTURE_2D, texFireID);
+	programParticle.sendUniform("texture0", 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, idBufferVelocity);
 	glVertexAttribPointer(aVelocity, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -453,8 +453,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDrawArrays(GL_POINTS, 0, NPARTICLES);
 
 	// Setup smoke uniform variables
-	programParticle.sendUniform("initialPos", vec3(1,5,13));
-	programParticle.sendUniform("uColor", vec3(.8f,.8f,.8f));
+	programParticle.sendUniform("initialPos", vec3(1.7, 7, 11.3));
+	programParticle.sendUniform("uColor", vec3(.8f, .8f, .8f));
 	programParticle.sendUniform("smoke", true);
 
 	//Texture binding for Smoke
@@ -471,8 +471,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDrawArrays(GL_POINTS, 0, NSMOKEPARTICLES);
 
 	// Set firefly uniform variables
-	programParticle.sendUniform("gravity", vec3(0,0,0));
-	programParticle.sendUniform("initialPos", vec3(50,5,10));
+	programParticle.sendUniform("gravity", vec3(0, 0, 0));
+	programParticle.sendUniform("initialPos", vec3(50, 8, 10));
 	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
 	programParticle.sendUniform("smoke", false);
 
@@ -497,7 +497,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	glDisableVertexAttribArray(aStartTime);
 	glDisableVertexAttribArray(aIndividualPos);
 
-	glDepthMask(GL_TRUE); 
+	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);
 	glDisable(GL_PROGRAM_POINT_SIZE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
