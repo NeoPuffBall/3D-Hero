@@ -174,6 +174,8 @@
     <None Include="shaders\clouds.vert" />
     <None Include="shaders\particles.frag" />
     <None Include="shaders\particles.vert" />
+    <None Include="shaders\skybox.frag" />
+    <None Include="shaders\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="3dgl\3dgl.vcxproj">

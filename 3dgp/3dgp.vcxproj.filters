@@ -36,6 +36,12 @@
     <None Include="shaders\clouds.vert">
       <Filter>Shader Source Files</Filter>
     </None>
+    <None Include="shaders\skybox.frag">
+      <Filter>Shader Source Files</Filter>
+    </None>
+    <None Include="shaders\skybox.vert">
+      <Filter>Shader Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

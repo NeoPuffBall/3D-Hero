@@ -18,6 +18,6 @@ void main(void)
 	}
 	else
 	{
-		outColor = color + vec4(0.5,0.5,0.5,0);
+		outColor = color + vec4(0.5,0.5,0.55,0);
 	}
 }

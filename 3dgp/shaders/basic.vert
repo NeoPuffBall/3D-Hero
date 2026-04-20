@@ -81,7 +81,7 @@ void main(void)
     color += AmbientLight(lightAmbient);
     color += DirectionalLight(lightDir);
 
-    fogFactor = exp2(-fogDensity * length(position));
+    fogFactor = exp2(-clamp(fogDensity,0.15,1) * length(position));
 
     texCoord0 = aTexCoord;
 }

@@ -17,7 +17,6 @@ using namespace std;
 using namespace _3dgl;
 using namespace glm;
 
-
 // GLSL Program
 C3dglProgram program, programParticle,cloudGl;
 
@@ -33,10 +32,10 @@ C3dglBitmap fire, smoke, bm, hMap1, hMap2;
 
 // Skybox
 C3dglSkyBox Skybox; 
+float daytime;
 
 // 3D Models
-C3dglModel city, Mouse;
-C3dglModel clouds;
+C3dglModel city, Mouse, clouds;
 
 // Character animation
 C3dglModel clapping;
@@ -49,7 +48,6 @@ float maxspeed = 4.f;	// camera max speed
 float accel = 4.f;		// camera acceleration
 vec3 _acc(0), _vel(0);	// camera acceleration and velocity vectors
 float _fov = 60.f;		// field of view (zoom)
-
 
 // Particle System Params (Fire)
 const float PERIOD = 0.001f;
@@ -121,17 +119,12 @@ bool init()
 	//Setup Ambient Light
 	program.sendUniform("lightAmbient.color", vec3(1.0f, 1.0f, 1.0f));
 	program.sendUniform("materialDiffuse", vec3(0.0f, 0.0f, 0.0f));
-	program.sendUniform("materialAmbient", vec3(0.2f,0.2f,0.2f));
-
-	//Setup Directional Light
-	program.sendUniform("lightDir.direction", vec3(0.5f, 0.5f, 0.5f));
-	program.sendUniform("lightDir.diffuse", vec3(0.3f, 0.3f, 0.4f));
 
 	//Setup Point Light
-	program.sendUniform("lightPoint.position", vec3(-22.0f, -3.0f, -4.10f));
-	program.sendUniform("lightPoint.diffuse", vec3(0.8f, 0.8f, 0.8f));
+	program.sendUniform("lightPoint.position", vec3(2.75, 2, 11));
+	program.sendUniform("lightPoint.diffuse", vec3(10.f, 0.0f, 0.0f));
+	program.sendUniform("att_quadratic", 0.1);
 
-	cloudGl.sendUniform("material", vec3(.25f,.25f,.25f));
 
 	/////////////////////////////////////////////////////////////////////////
 	program.use();
@@ -347,10 +340,23 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	mat4 m;
 	m = matrixView;
 
+	daytime = sin(time*0.25f);
+	float halfday = 0.75 + (daytime * 0.5);
+	cout << halfday << endl;
 	program.use();
 
+	//Setup Directional Light
+	program.sendUniform("lightDir.direction", vec3(daytime, 0.5f, daytime+1.57));
+	program.sendUniform("lightDir.diffuse", vec3(1, 1, 1)* daytime);
+
+	program.sendUniform("fogColour", vec3(0.15f, 0.1f, 0.25f));
+	program.sendUniform("fogDensity", 0.4f* -daytime);
+
 	//Render the skybox
+	program.sendUniform("materialAmbient", vec3(1,1,1) * halfday);
 	Skybox.render(m);
+
+	program.sendUniform("materialAmbient", vec3(.2f, .2f, .2f) * daytime);
 
 	m = translate(m, vec3(2.75, 2, 23.5));
 	city.render(m);
@@ -369,6 +375,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	// Clouds under city
 	cloudGl.use();
 	m = matrixView;
+	cloudGl.sendUniform("material", vec3(1, 1, 1)*daytime);
 	cloudGl.sendUniform("t", time);
 	cloudGl.sendUniform("a", 1.f);
 	cloudGl.sendUniform("vertPos", -5.2);
@@ -382,8 +389,8 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	cloudGl.sendUniform("vertPos", -3.7f);
 	cloudGl.sendUniform("a", 1.f);
-	cloudGl.sendUniform("transparency", 0.5f);
-	cloudGl.sendUniform("clipping", 0.8f);
+	cloudGl.sendUniform("transparency", 0.1f);
+	cloudGl.sendUniform("clipping", 0.3f);
 	cloudGl.sendUniform("n1Speed", vec2(0.25f, -0.1f));
 	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
 	cloudGl.sendUniform("noise1", 2);
@@ -392,7 +399,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 
 	cloudGl.sendUniform("vertPos", -2);
 	cloudGl.sendUniform("a", 0.5f);
-	cloudGl.sendUniform("transparency", 0.1f);
+	cloudGl.sendUniform("transparency", 0.2f);
 	cloudGl.sendUniform("clipping", 0.2f);
 	cloudGl.sendUniform("n1Speed", vec2(0.f, -0.1f));
 	cloudGl.sendUniform("n2Speed", vec2(-0.6f, 0.2f));
@@ -409,9 +416,6 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	cloudGl.sendUniform("noise1", 2);
 	cloudGl.sendUniform("noise2", 2);
 	clouds.render(m);
-
-	program.sendUniform("fogColour", vec3(0.2f, 0.4f, 0.5f));
-	program.sendUniform("fogDensity", 0.1f);
 
 	// Use particle system
 	glDepthMask(GL_FALSE);
@@ -473,7 +477,7 @@ void renderScene(mat4& matrixView, float time, float deltaTime)
 	// Set firefly uniform variables
 	programParticle.sendUniform("gravity", vec3(0, 0, 0));
 	programParticle.sendUniform("initialPos", vec3(50, 8, 10));
-	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f));
+	programParticle.sendUniform("uColor", vec3(1.0f, 1.0f, 1.0f)* -sin(daytime));
 	programParticle.sendUniform("smoke", false);
 
 	//Texture binding for Fireflies
